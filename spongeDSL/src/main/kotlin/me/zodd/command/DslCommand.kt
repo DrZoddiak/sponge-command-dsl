@@ -3,7 +3,7 @@ package me.zodd.command
 import org.spongepowered.api.command.Command
 
 data class DslCommand(
-    private val aliases: List<String>,
+    val aliases: List<String>,
     val command: Command.Parameterized
 ) {
     val baseAlias = aliases[0]

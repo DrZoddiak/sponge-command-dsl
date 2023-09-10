@@ -5,89 +5,93 @@ import net.kyori.adventure.text.Component
 import org.spongepowered.api.command.Command
 import org.spongepowered.api.command.CommandResult
 import org.spongepowered.api.command.parameter.CommandContext
+import org.spongepowered.api.command.parameter.Parameter
+import org.spongepowered.api.command.parameter.managed.Flag
 
 @SpongeDsl
-class CommandBuilder : AbstractCommandBuilder<CommandBuilder>() {
+class CommandBuilder : DslArgument, DslContext {
 
     companion object {
         val builder = CommandBuilder()
     }
 
-    override fun getInstance(): CommandBuilder {
-        return this
-    }
-}
-
-@SpongeDsl
-class SubCommandBuilder : AbstractCommandBuilder<SubCommandBuilder>() {
-    override fun getInstance(): SubCommandBuilder {
-        return this
-    }
-}
-
-abstract class AbstractCommandBuilder<T : AbstractCommandBuilder<T>> : DslContext, DslArgument {
-
-    internal var builtCommands = mutableListOf<DslCommand>()
-
-    private lateinit var aliases: List<String>
-    private lateinit var description: String
-    private lateinit var permission: String
-    internal lateinit var commandExecutor: CommandContext.() -> CommandResult
-
     init {
         applyDefaults()
     }
 
+    lateinit var aliases: MutableList<String>
+    lateinit var description: String
+    lateinit var permission: String
+
+    private lateinit var commandExecutor: CommandContext.() -> CommandResult
+
+    private var parameters = mutableListOf<Parameter>()
+    private var subcommands = mutableListOf<DslCommand>()
+    private var flags = mutableListOf<Flag>()
+
     private fun applyDefaults() {
-        aliases = listOf()
-        commandExecutor = { error(Component.text("Command executor not registered")) }
-        permission = ""
+        aliases = mutableListOf()
         description = ""
+        permission = ""
+
+        commandExecutor = { error(Component.text("Command executor not registered")) }
+
+        parameters = mutableListOf()
+        subcommands = mutableListOf()
+        flags = mutableListOf()
     }
 
-    operator fun invoke(initializer: T.() -> Unit): List<DslCommand> {
-        initializer(getInstance())
+    private var builtCommands = mutableListOf<DslCommand>()
+
+    operator fun invoke(initializer: CommandBuilder.() -> Unit): List<DslCommand> {
+        this.initializer()
         return builtCommands
     }
 
-    infix fun String.withAlias(aliases: String): T {
-        getInstance().aliases = listOf(this, *aliases.split(",").toTypedArray())
-        return getInstance()
+    operator fun <T : Any> Parameter.Value<T>.unaryPlus() {
+        parameters += this
     }
 
-    infix fun String.withAlias(aliases: Array<String>): T {
-        return this.withAlias(aliases.joinToString(","))
+    operator fun Flag.unaryPlus() {
+        flags += this
     }
 
-    infix fun T.withDescription(description: String): T {
-        this.description = description
-        return this
+    fun command(name: String, initializer: CommandBuilder.(name: String) -> Unit): DslCommand {
+        aliases += name
+        this.initializer(name)
+        return buildCommand()
     }
 
-    infix fun T.withPermission(permission: String): T {
-        this.permission = permission
-        return this
-    }
-
-    infix fun T.withArgs(param: ArgumentBuilder.() -> Unit): DslCommand {
-        val commandBuilder = Command.builder()
-        val argBuilder = ArgumentBuilder(getInstance())
-        argBuilder.param()
-
-        commandBuilder.addParameters(argBuilder.parameters)
-        commandBuilder.addFlags(argBuilder.flags)
-        commandBuilder.executor(commandExecutor)
-        commandBuilder.shortDescription(Component.text(description))
-        commandBuilder.permission(permission)
-
-        val command = DslCommand(aliases, commandBuilder.build())
-        builtCommands.add(command)
-        applyDefaults()
-        argBuilder.clear()
-
+    fun subcommand(name: String, initializer: CommandBuilder.(cmd: String) -> Unit): DslCommand {
+        val subBuilder = CommandBuilder()
+        subBuilder.aliases += name
+        subBuilder.initializer(name)
+        val command = subBuilder.buildCommand()
+        subcommands += command
         return command
     }
 
-    abstract fun getInstance(): T
-}
+    fun executes(exec: CommandContext.() -> CommandResult) {
+        commandExecutor = exec
+    }
 
+    private fun buildCommand(): DslCommand {
+        val spongeCommandBuilder = Command.builder()
+
+        spongeCommandBuilder.apply {
+            subcommands.forEach {
+                addChild(it.command, it.aliases)
+            }
+            addParameters(parameters)
+            addFlags(flags)
+            executor(commandExecutor)
+            shortDescription(Component.text(description))
+            permission(permission)
+        }
+        val command = DslCommand(aliases, spongeCommandBuilder.build())
+        builtCommands.add(command)
+        applyDefaults()
+
+        return command
+    }
+}

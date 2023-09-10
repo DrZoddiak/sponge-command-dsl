@@ -12,7 +12,7 @@ import org.spongepowered.api.command.parameter.CommandContext
 import org.spongepowered.api.command.parameter.Parameter
 
 class DslCommands {
-    private fun commandTest(ctx : CommandContext) {
+    private fun commandTest(ctx: CommandContext) {
         val name = ctx.requireOne(nameParam)
         ctx.sendMessage(
             Identity.nil(), LinearComponents.linear(
@@ -27,56 +27,62 @@ class DslCommands {
     val commands = CommandBuilder.builder {
         val reason = "reason" withType Parameter.string()
 
-        "greet" withAlias arrayOf(
-            "wave",
-            "sing") withDescription "greets users" withPermission "dslTest.command.greet" withArgs {
+        command("greet") {
+            aliases += "wave"
+            aliases += "sing"
+            description = "greets users"
+            permission = "dslTest.command.greet"
             +nameParam
-
-            execute {
+            executes {
                 commandTest(this)
-
                 success()
             }
         }
 
-        "ban" withAlias "bban" withDescription "bans users" withPermission "dslTest.command.ban" withArgs {
+        command("ban") {
+            aliases += "bban"
+            description = "bans users"
+            permission = "dslTest.command.ban"
             +nameParam
             +reason
-            execute {
+            executes {
                 commandTest(this)
-
                 success()
             }
         }
 
-        "foo" withAlias "buzz" withDescription "test sub" withPermission "dslTest.command.foo" withArgs {
+        command("foo") {
+            aliases += "buzz"
+            description = "test desc"
+            permission = "dslTest.command.foo"
 
-            +subcommand {
-                "cheese" withAlias "breeze" withDescription "weezy" withPermission "dslTest.command.cheese" withArgs {
-                    +subcommand {
-                        "butter" withAlias "blasted" withDescription "unrated" withPermission "dslTest.command.butter" withArgs {
-                            +nameParam
-                            execute {
-                                commandTest(this)
+            +nameParam
+            subcommand("sub") {
+                aliases += "bus"
+                description = "desc"
+                permission = "dslTest.command.sub"
 
-                                success()
-                            }
-                        }
-                    }
-
-                    execute {
-                        commandTest(this)
+                subcommand("crank") {
+                    permission = "dslTest.command.crank"
+                    executes {
                         success()
                     }
                 }
+                executes {
+                    success()
+                }
+            }
+            subcommand("test") {
+                permission = "dslTest.command.test"
+                executes {
+                    success()
+                }
             }
 
-            execute {
+            executes {
                 commandTest(this)
                 success()
             }
         }
-
-
     }
 }
