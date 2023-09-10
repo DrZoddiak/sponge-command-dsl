@@ -6,7 +6,7 @@ import org.spongepowered.api.command.parameter.CommandContext
 import org.spongepowered.api.command.parameter.Parameter
 import org.spongepowered.api.command.parameter.managed.Flag
 
-internal sealed interface DslContext {
+sealed interface DslContext {
     infix fun <T> CommandContext.requireOne(param: Parameter.Value<T>): T = this.requireOne(param)
 
     fun CommandContext.success(): CommandResult = CommandResult.success()

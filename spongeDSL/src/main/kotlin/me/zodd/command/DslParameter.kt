@@ -2,9 +2,8 @@ package me.zodd.command
 
 import org.spongepowered.api.command.parameter.Parameter
 
-
-interface DslParameter {
-    infix fun <T> String.typedWith(type: Parameter.Value.Builder<T>): Parameter.Value<T> {
+sealed interface DslParameter {
+    infix fun <T> String.withType(type: Parameter.Value.Builder<T>): Parameter.Value<T> {
         return type.key(this).build()
     }
 

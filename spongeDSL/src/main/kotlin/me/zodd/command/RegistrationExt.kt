@@ -8,12 +8,12 @@ fun RegisterCommandEvent<Command.Parameterized>.register(
     container: PluginContainer,
     dslCommand: DslCommand
 ) {
-    this.register(container, dslCommand.command, dslCommand.baseCmd, *dslCommand.remainingAliases)
+    this.register(container, dslCommand.command, dslCommand.baseAlias, *dslCommand.remainingAliases)
 }
 
 fun RegisterCommandEvent<Command.Parameterized>.register(
     container: PluginContainer,
-    dslCommands: MutableList<DslCommand>
+    dslCommands: List<DslCommand>
 ) {
     dslCommands.forEach { this.register(container, it) }
 }

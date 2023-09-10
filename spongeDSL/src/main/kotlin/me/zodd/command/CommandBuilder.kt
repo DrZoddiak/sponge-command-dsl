@@ -3,54 +3,75 @@ package me.zodd.command
 import me.zodd.annotation.SpongeDsl
 import net.kyori.adventure.text.Component
 import org.spongepowered.api.command.Command
-import org.spongepowered.api.command.Command.Parameterized
 import org.spongepowered.api.command.CommandResult
 import org.spongepowered.api.command.parameter.CommandContext
-import org.spongepowered.api.command.parameter.managed.Flag
-import org.spongepowered.api.event.lifecycle.RegisterCommandEvent
-import org.spongepowered.plugin.PluginContainer
 
 @SpongeDsl
-class CommandBuilder : DslContext, DslArgument {
+class CommandBuilder : AbstractCommandBuilder<CommandBuilder>() {
 
-    private var builtCommands = mutableListOf<DslCommand>()
+    companion object {
+        val builder = CommandBuilder()
+    }
 
-    private var aliases = mutableListOf<String>()
+    override fun getInstance(): CommandBuilder {
+        return this
+    }
+}
+
+@SpongeDsl
+class SubCommandBuilder : AbstractCommandBuilder<SubCommandBuilder>() {
+    override fun getInstance(): SubCommandBuilder {
+        return this
+    }
+}
+
+abstract class AbstractCommandBuilder<T : AbstractCommandBuilder<T>> : DslContext, DslArgument {
+
+    internal var builtCommands = mutableListOf<DslCommand>()
+
+    private lateinit var aliases: List<String>
     private lateinit var description: String
     private lateinit var permission: String
-    internal lateinit var commandExecutor: (CommandContext) -> CommandResult
+    internal lateinit var commandExecutor: CommandContext.() -> CommandResult
 
     init {
         applyDefaults()
     }
 
-    operator fun invoke(initializer: CommandBuilder.() -> Unit): MutableList<DslCommand> {
-        initializer()
+    private fun applyDefaults() {
+        aliases = listOf()
+        commandExecutor = { error(Component.text("Command executor not registered")) }
+        permission = ""
+        description = ""
+    }
+
+    operator fun invoke(initializer: T.() -> Unit): List<DslCommand> {
+        initializer(getInstance())
         return builtCommands
     }
 
-    infix fun CommandBuilder.describedBy(description: String): CommandBuilder {
+    infix fun String.withAlias(aliases: String): T {
+        getInstance().aliases = listOf(this, *aliases.split(",").toTypedArray())
+        return getInstance()
+    }
+
+    infix fun String.withAlias(aliases: Array<String>): T {
+        return this.withAlias(aliases.joinToString(","))
+    }
+
+    infix fun T.withDescription(description: String): T {
         this.description = description
         return this
     }
 
-    infix fun String.describedBy(description: String): CommandBuilder {
-        return describedBy(description)
+    infix fun T.withPermission(permission: String): T {
+        this.permission = permission
+        return this
     }
 
-    infix fun String.aliasedWith(aliases: String): CommandBuilder {
-        this@CommandBuilder.aliases.add(this)
-        this@CommandBuilder.aliases.addAll(aliases.split(","))
-        return this@CommandBuilder
-    }
-
-    infix fun String.aliasedWith(aliases: Array<String>): CommandBuilder {
-        return this.aliasedWith(aliases.joinToString(","))
-    }
-
-    infix fun withArgs(param: ArgumentBuilder.() -> Unit): DslCommand {
+    infix fun T.withArgs(param: ArgumentBuilder.() -> Unit): DslCommand {
         val commandBuilder = Command.builder()
-        val argBuilder = ArgumentBuilder(this)
+        val argBuilder = ArgumentBuilder(getInstance())
         argBuilder.param()
 
         commandBuilder.addParameters(argBuilder.parameters)
@@ -63,18 +84,10 @@ class CommandBuilder : DslContext, DslArgument {
         builtCommands.add(command)
         applyDefaults()
         argBuilder.clear()
+
         return command
     }
 
-    infix fun permissibleWith(permission: String): CommandBuilder {
-        this.permission = permission
-        return this
-    }
-
-    private fun applyDefaults() {
-        aliases.clear()
-        commandExecutor = { it.error(Component.text("Command executor not registered")) }
-        permission = ""
-        description = ""
-    }
+    abstract fun getInstance(): T
 }
+

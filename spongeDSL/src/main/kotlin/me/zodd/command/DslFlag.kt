@@ -2,7 +2,7 @@ package me.zodd.command
 
 import org.spongepowered.api.command.parameter.managed.Flag
 
-interface DslFlag {
+sealed interface DslFlag {
     infix fun String.buildFlag(permission: String): Flag {
         return asFlag(permission).build()
     }

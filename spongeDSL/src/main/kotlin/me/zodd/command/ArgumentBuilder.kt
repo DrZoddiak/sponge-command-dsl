@@ -7,7 +7,7 @@ import org.spongepowered.api.command.parameter.Parameter
 import org.spongepowered.api.command.parameter.managed.Flag
 
 @SpongeDsl
-class ArgumentBuilder(private val builder: CommandBuilder) : DslContext {
+class ArgumentBuilder(private val builder: AbstractCommandBuilder<*>) : DslContext {
     var parameters = mutableListOf<Parameter>()
     var flags = mutableListOf<Flag>()
 
@@ -19,7 +19,13 @@ class ArgumentBuilder(private val builder: CommandBuilder) : DslContext {
         flags.add(this)
     }
 
-    infix fun execute(exec: (CommandContext) -> CommandResult): CommandBuilder {
+    operator fun List<DslCommand>.unaryPlus() {
+        map { Parameter.subcommand(it.command, it.baseAlias, *it.remainingAliases) }.forEach { parameters.add(it) }
+    }
+
+    val subcommand = SubCommandBuilder()
+
+    infix fun execute(exec: CommandContext.() -> CommandResult): AbstractCommandBuilder<*> {
         builder.commandExecutor = exec
         return builder
     }
@@ -29,3 +35,6 @@ class ArgumentBuilder(private val builder: CommandBuilder) : DslContext {
         flags.clear()
     }
 }
+
+
+

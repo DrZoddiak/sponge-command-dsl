@@ -1,7 +1,6 @@
 package me.zodd.dsltest
 
 import com.google.inject.Inject
-import me.zodd.command.CommandBuilder
 import me.zodd.command.register
 import org.apache.logging.log4j.Logger
 import org.spongepowered.api.Server
@@ -40,6 +39,7 @@ class DslTest @Inject constructor(private val container: PluginContainer, privat
     fun onServerStarting(event: StartingEngineEvent<Server?>?) {
         // Any setup per-game instance. This can run multiple times when
         // using the integrated (singleplayer) server.
+
     }
 
     @Listener
