@@ -1,6 +1,6 @@
 package me.zodd.dsltest
 
-import me.zodd.command.CommandBuilder
+import me.zodd.command.CommandManager
 import me.zodd.dsltest.DslTestArguments.nameParam
 import net.kyori.adventure.identity.Identity
 import net.kyori.adventure.text.Component
@@ -24,8 +24,9 @@ class DslCommands {
         )
     }
 
-    val commands = CommandBuilder.builder {
+    val commands = CommandManager.builder {
         val reason = "reason" withType Parameter.string()
+
 
         command("greet") {
             aliases += "wave"

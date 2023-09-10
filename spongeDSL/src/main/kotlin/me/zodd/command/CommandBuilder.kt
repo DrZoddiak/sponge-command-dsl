@@ -9,44 +9,42 @@ import org.spongepowered.api.command.parameter.Parameter
 import org.spongepowered.api.command.parameter.managed.Flag
 
 @SpongeDsl
+class CommandManager : DslArgument, DslContext {
+    companion object {
+        val builder = CommandManager()
+    }
+
+    operator fun invoke(initializer: CommandManager.() -> Unit): List<DslCommand> {
+        this.initializer()
+        return CommandBuilder.builtCommands
+    }
+
+    fun command(name: String, initializer: CommandBuilder.(name: String) -> Unit): DslCommand {
+        val builder = CommandBuilder()
+        builder.aliases += name
+        builder.initializer(name)
+        return builder.buildCommand()
+    }
+
+}
+
+@SpongeDsl
 class CommandBuilder : DslArgument, DslContext {
 
     companion object {
-        val builder = CommandBuilder()
+        internal val builtCommands = mutableListOf<DslCommand>()
     }
 
-    init {
-        applyDefaults()
-    }
+    var aliases: MutableList<String> = mutableListOf()
+    var description: String = ""
+    var permission: String = ""
 
-    lateinit var aliases: MutableList<String>
-    lateinit var description: String
-    lateinit var permission: String
-
-    private lateinit var commandExecutor: CommandContext.() -> CommandResult
+    private var commandExecutor: CommandContext.() -> CommandResult =
+        { error(Component.text("Command executor not registered")) }
 
     private var parameters = mutableListOf<Parameter>()
     private var subcommands = mutableListOf<DslCommand>()
     private var flags = mutableListOf<Flag>()
-
-    private fun applyDefaults() {
-        aliases = mutableListOf()
-        description = ""
-        permission = ""
-
-        commandExecutor = { error(Component.text("Command executor not registered")) }
-
-        parameters = mutableListOf()
-        subcommands = mutableListOf()
-        flags = mutableListOf()
-    }
-
-    private var builtCommands = mutableListOf<DslCommand>()
-
-    operator fun invoke(initializer: CommandBuilder.() -> Unit): List<DslCommand> {
-        this.initializer()
-        return builtCommands
-    }
 
     operator fun <T : Any> Parameter.Value<T>.unaryPlus() {
         parameters += this
@@ -54,12 +52,6 @@ class CommandBuilder : DslArgument, DslContext {
 
     operator fun Flag.unaryPlus() {
         flags += this
-    }
-
-    fun command(name: String, initializer: CommandBuilder.(name: String) -> Unit): DslCommand {
-        aliases += name
-        this.initializer(name)
-        return buildCommand()
     }
 
     fun subcommand(name: String, initializer: CommandBuilder.(cmd: String) -> Unit): DslCommand {
@@ -75,7 +67,7 @@ class CommandBuilder : DslArgument, DslContext {
         commandExecutor = exec
     }
 
-    private fun buildCommand(): DslCommand {
+    internal fun buildCommand(): DslCommand {
         val spongeCommandBuilder = Command.builder()
 
         spongeCommandBuilder.apply {
@@ -90,7 +82,6 @@ class CommandBuilder : DslArgument, DslContext {
         }
         val command = DslCommand(aliases, spongeCommandBuilder.build())
         builtCommands.add(command)
-        applyDefaults()
 
         return command
     }
