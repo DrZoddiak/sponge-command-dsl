@@ -11,5 +11,5 @@ listOf(
 
 fun includeProject(name: String) {
     include(name)
-    project(":$name").projectDir = File("D:\\Programming Projects\\My Projects\\SpongeDSLTest\\$name")
+    project(":$name")
 }
