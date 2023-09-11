@@ -1,7 +1,7 @@
 package me.zodd.dsltest
 
 import com.google.inject.Inject
-import me.zodd.command.register
+import me.zodd.command.util.register
 import org.apache.logging.log4j.Logger
 import org.spongepowered.api.Server
 import org.spongepowered.api.command.Command
@@ -25,8 +25,6 @@ class DslTest @Inject constructor(private val container: PluginContainer, privat
     @Listener
     fun onConstructPlugin(event: ConstructPluginEvent?) {
         // Perform any one-time setup
-
-
         logger.info("Constructing dslTest")
     }
 
@@ -39,7 +37,6 @@ class DslTest @Inject constructor(private val container: PluginContainer, privat
     fun onServerStarting(event: StartingEngineEvent<Server?>?) {
         // Any setup per-game instance. This can run multiple times when
         // using the integrated (singleplayer) server.
-
     }
 
     @Listener

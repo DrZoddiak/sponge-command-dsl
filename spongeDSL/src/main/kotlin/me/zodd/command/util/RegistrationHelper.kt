@@ -1,5 +1,6 @@
-package me.zodd.command
+package me.zodd.command.util
 
+import me.zodd.command.DslCommand
 import org.spongepowered.api.command.Command
 import org.spongepowered.api.event.lifecycle.RegisterCommandEvent
 import org.spongepowered.plugin.PluginContainer

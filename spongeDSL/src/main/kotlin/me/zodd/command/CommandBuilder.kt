@@ -10,6 +10,7 @@ import org.spongepowered.api.command.parameter.managed.Flag
 
 @SpongeDsl
 class CommandManager : DslArgument, DslContext {
+
     companion object {
         val builder = CommandManager()
     }
@@ -25,7 +26,6 @@ class CommandManager : DslArgument, DslContext {
         builder.initializer(name)
         return builder.buildCommand()
     }
-
 }
 
 @SpongeDsl
