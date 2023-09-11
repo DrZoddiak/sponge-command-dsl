@@ -10,16 +10,23 @@ import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.format.TextDecoration
 import org.spongepowered.api.command.parameter.CommonParameters
 import org.spongepowered.api.command.parameter.Parameter
+import org.spongepowered.api.entity.living.player.server.ServerPlayer
+import java.util.function.Predicate
 import kotlin.jvm.optionals.getOrNull
 
 class DslCommands {
     val commands = CommandManager.builder {
         val reason = "reason" withType Parameter.string()
 
-        command("greet") {
+        command("greet") { baseCmd ->
             aliases += "wave"
             description = "greets users"
-            permission = "dslTest.command.$it"
+            permission = "dslTest.command.$baseCmd"
+            terminal = false
+
+            executionRequirement = Predicate {
+                it.cause().root() is ServerPlayer
+            }
 
             +nameParam
             executes {
@@ -56,10 +63,10 @@ class DslCommands {
             }
         }
 
-        command("foo") {
+        command("foo") { baseCmd ->
             aliases += "buzz"
             description = "Foo the buzz on your bar"
-            permission = "dslTest.command.$it"
+            permission = "dslTest.command.$baseCmd"
 
             +nameParam
             subcommand("sub") {
