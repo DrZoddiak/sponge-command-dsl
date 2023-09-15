@@ -6,7 +6,8 @@ import me.zodd.annotation.SpongeDsl
 class CommandManager : DslArgument, DslContext {
 
     companion object {
-        val builder = CommandManager()
+        val builder
+            get() = CommandManager()
     }
 
     operator fun invoke(initializer: CommandManager.() -> Unit): List<DslCommand> {
